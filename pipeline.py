@@ -70,9 +70,9 @@ print "BEFORE filter w/ solidity: {}".format( len(hulls) )
 hulls = [hull for hull in hulls if solidity(hull) < solidityThreshold]
 print "AFTER filter w/ solidity: {}".format( len(hulls) )
 
-vis = img.copy()
-cv2.polylines(vis, hulls, 1, (0, 255, 0))
-cv2.imshow('img2', vis)
+# vis = img.copy()
+# cv2.polylines(vis, hulls, 1, (0, 255, 0))
+# cv2.imshow('img2', vis)
 # cv2.waitKey(0)
 # cv2.destroyAllWindows()
 # ------------------------------------------------------------------------------

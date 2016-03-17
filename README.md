@@ -1,3 +1,7 @@
+**Image Text Recognition**
+
+*WARNING*: For the Python scripts to work, a very specific configuration of Python libraries is required. Such configuration will be added later.
+
 The image text recognition consists of multiple steps,
 described as following (the initial pipeline consists of steps 1 – 3):
 

@@ -61,5 +61,5 @@ target/
 #Ipython Notebook
 .ipynb_checkpoints
 
-# Mac extension (?) for folders
-mnist_database/.DS_Store
+# Mac extension (?) for something
+.DS_Store

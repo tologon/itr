@@ -1,6 +1,8 @@
-import os, struct
+import os, struct, cv2
 from array import array as pyarray
 from numpy import append, array, int8, uint8, zeros
+import numpy as np
+from sklearn import svm
 
 def load_mnist(dataset="training", digits=None, path=None, asbytes=False, selection=None, return_labels=True, return_indices=False):
     """
@@ -126,10 +128,33 @@ def load_mnist(dataset="training", digits=None, path=None, asbytes=False, select
     else:
         return ret
 
-
-
 from pylab import *
 from numpy import *
-images, labels = load_mnist('training', digits=[5])
-imshow(images.mean(axis=0), cmap=cm.gray)
+# example on how to get digit 5 from MNIST database
+images, labels = load_mnist('training', digits=[1, 9])
+
+# image = images[0]
+# imshow(image, cmap=cm.gray)
+# show()
+# cv2.imwrite('tmp.png', image)
+# print "image shape: {}".format(image.shape)
+
+classifier = svm.SVC()
+
+images_size = len(images)
+twoDimensionalImages = images.reshape(images_size, -1)
+classifier.fit(twoDimensionalImages, labels)
+
+original_img = cv2.imread('test_image8.png', 0)
+image = cv2.resize(original_img, (28, 28))
+# image_size = len(img)
+# twoDImage = img.reshape(image_size, -1)
+# print "image shape: {}".format(twoDImage.shape)
+
+# test_images, test_labels = load_mnist('testing', digits=[9])
+# image = test_images[500]
+imshow(image, cmap=cm.gray)
 show()
+print "image shape: {}".format(image.shape)
+decision = classifier.predict( image.ravel().reshape(1, -1) )
+print decision

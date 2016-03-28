@@ -1,8 +1,8 @@
-import cv2
+import cv2, math, mnist
 import numpy as np
-import math
+from sklearn import svm
 
-img = cv2.imread('test_image6.png', 0)
+img = cv2.imread('test_image8.png', 0)
 # Pipeline - MSER detection
 mser = cv2.MSER_create()
 
@@ -98,6 +98,6 @@ print "AFTER filter w/ stroke width variation: {}".format( len(hulls) )
 vis = img.copy()
 cv2.polylines(vis, hulls, 1, (0, 255, 0))
 cv2.imshow('img3', vis)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
 # ------------------------------------------------------------------------------

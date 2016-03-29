@@ -1,160 +1,55 @@
-import os, struct, cv2
-from array import array as pyarray
-from numpy import append, array, int8, uint8, zeros
-import numpy as np
-from sklearn import svm
+# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
+# License: BSD 3 clause
 
-def load_mnist(dataset="training", digits=None, path=None, asbytes=False, selection=None, return_labels=True, return_indices=False):
-    """
-    Loads MNIST files into a 3D numpy array.
+# Standard scientific Python imports
+import matplotlib.pyplot as plt
 
-    You have to download the data separately from [MNIST]_. It is recommended
-    to set the environment variable ``MNIST`` to point to the folder where you
-    put the data, so that you don't have to select path. On a Linux+bash setup,
-    this is done by adding the following to your ``.bashrc``::
+# Import datasets, classifiers and performance metrics
+from sklearn import datasets, svm, metrics
 
-        export MNIST=/path/to/mnist
+# The digits dataset
+digits = datasets.load_digits()
 
-    Parameters
-    ----------
-    dataset : str
-        Either "training" or "testing", depending on which dataset you want to
-        load.
-    digits : list
-        Integer list of digits to load. The entire database is loaded if set to
-        ``None``. Default is ``None``.
-    path : str
-        Path to your MNIST datafiles. The default is ``None``, which will try
-        to take the path from your environment variable ``MNIST``. The data can
-        be downloaded from http://yann.lecun.com/exdb/mnist/.
-    asbytes : bool
-        If True, returns data as ``numpy.uint8`` in [0, 255] as opposed to
-        ``numpy.float64`` in [0.0, 1.0].
-    selection : slice
-        Using a `slice` object, specify what subset of the dataset to load. An
-        example is ``slice(0, 20, 2)``, which would load every other digit
-        until--but not including--the twentieth.
-    return_labels : bool
-        Specify whether or not labels should be returned. This is also a speed
-        performance if digits are not specified, since then the labels file
-        does not need to be read at all.
-    return_indicies : bool
-        Specify whether or not to return the MNIST indices that were fetched.
-        This is valuable only if digits is specified, because in that case it
-        can be valuable to know how far
-        in the database it reached.
+# The data that we are interested in is made of 8x8 images of digits, let's
+# have a look at the first 3 images, stored in the `images` attribute of the
+# dataset.  If we were working from image files, we could load them using
+# pylab.imread.  Note that each image must have the same size. For these
+# images, we know which digit they represent: it is given in the 'target' of
+# the dataset.
+images_and_labels = list(zip(digits.images, digits.target))
+for index, (image, label) in enumerate(images_and_labels[:4]):
+    plt.subplot(2, 4, index + 1)
+    plt.axis('off')
+    plt.imshow(image, cmap=plt.cm.gray_r, interpolation='nearest')
+    plt.title('Training: %i' % label)
 
-    Returns
-    -------
-    images : ndarray
-        Image data of shape ``(N, rows, cols)``, where ``N`` is the number of images. If neither labels nor inices are returned, then this is returned directly, and not inside a 1-sized tuple.
-    labels : ndarray
-        Array of size ``N`` describing the labels. Returned only if ``return_labels`` is `True`, which is default.
-    indices : ndarray
-        The indices in the database that were returned.
+# To apply a classifier on this data, we need to flatten the image, to
+# turn the data in a (samples, feature) matrix:
+n_samples = len(digits.images)
+data = digits.images.reshape((n_samples, -1))
 
-    Examples
-    --------
-    Assuming that you have downloaded the MNIST database and set the
-    environment variable ``$MNIST`` point to the folder, this will load all
-    images and labels from the training set:
+# Create a classifier: a support vector classifier
+classifier = svm.SVC(gamma=0.001)
 
-    >>> images, labels = ag.io.load_mnist('training') # doctest: +SKIP
+# We learn the digits on the first half of the digits
+# print "CUSTOM PRINT: {}".format( data.shape )
+# print "CUSTOM PRINT: {}".format( type(data) )
+# print "CUSTOM PRINT: {}".format( data[:n_samples / 2] )
+classifier.fit(data[:n_samples / 2], digits.target[:n_samples / 2])
 
-    Load 100 sevens from the testing set:
+# Now predict the value of the digit on the second half:
+expected = digits.target[n_samples / 2:]
+predicted = classifier.predict(data[n_samples / 2:])
 
-    >>> sevens = ag.io.load_mnist('testing', digits=[7], selection=slice(0, 100), return_labels=False) # doctest: +SKIP
+print("Classification report for classifier %s:\n%s\n"
+      % (classifier, metrics.classification_report(expected, predicted)))
+print("Confusion matrix:\n%s" % metrics.confusion_matrix(expected, predicted))
 
-    """
+images_and_predictions = list(zip(digits.images[n_samples / 2:], predicted))
+for index, (image, prediction) in enumerate(images_and_predictions[:4]):
+    plt.subplot(2, 4, index + 5)
+    plt.axis('off')
+    plt.imshow(image, cmap=plt.cm.gray_r, interpolation='nearest')
+    plt.title('Prediction: %i' % prediction)
 
-    # The files are assumed to have these names and should be found in 'path'
-    files = {
-        'training': ('train-images-idx3-ubyte', 'train-labels-idx1-ubyte'),
-        'testing': ('t10k-images-idx3-ubyte', 't10k-labels-idx1-ubyte'),
-    }
-
-    if path is None:
-        try:
-            path = os.environ['MNIST']
-        except KeyError:
-            raise ValueError("Unspecified path requires environment variable $MNIST to be set")
-
-    try:
-        images_fname = os.path.join(path, files[dataset][0])
-        labels_fname = os.path.join(path, files[dataset][1])
-    except KeyError:
-        raise ValueError("Data set must be 'testing' or 'training'")
-
-    # We can skip the labels file only if digits aren't specified and labels aren't asked for
-    if return_labels or digits is not None:
-        flbl = open(labels_fname, 'rb')
-        magic_nr, size = struct.unpack(">II", flbl.read(8))
-        labels_raw = pyarray("b", flbl.read())
-        flbl.close()
-
-    fimg = open(images_fname, 'rb')
-    magic_nr, size, rows, cols = struct.unpack(">IIII", fimg.read(16))
-    images_raw = pyarray("B", fimg.read())
-    fimg.close()
-
-    if digits:
-        indices = [k for k in range(size) if labels_raw[k] in digits]
-    else:
-        indices = range(size)
-
-    if selection:
-        indices = indices[selection]
-    N = len(indices)
-
-    images = zeros((N, rows, cols), dtype=uint8)
-
-    if return_labels:
-        labels = zeros((N), dtype=int8)
-    for i, index in enumerate(indices):
-        images[i] = array(images_raw[ indices[i]*rows*cols : (indices[i]+1)*rows*cols ]).reshape((rows, cols))
-        if return_labels:
-            labels[i] = labels_raw[indices[i]]
-
-    if not asbytes:
-        images = images.astype(float)/255.0
-
-    ret = (images,)
-    if return_labels:
-        ret += (labels,)
-    if return_indices:
-        ret += (indices,)
-    if len(ret) == 1:
-        return ret[0] # Don't return a tuple of one
-    else:
-        return ret
-
-from pylab import *
-from numpy import *
-# example on how to get digit 5 from MNIST database
-images, labels = load_mnist('training', digits=[1, 9])
-
-# image = images[0]
-# imshow(image, cmap=cm.gray)
-# show()
-# cv2.imwrite('tmp.png', image)
-# print "image shape: {}".format(image.shape)
-
-classifier = svm.SVC()
-
-images_size = len(images)
-twoDimensionalImages = images.reshape(images_size, -1)
-classifier.fit(twoDimensionalImages, labels)
-
-original_img = cv2.imread('test_image8.png', 0)
-image = cv2.resize(original_img, (28, 28))
-# image_size = len(img)
-# twoDImage = img.reshape(image_size, -1)
-# print "image shape: {}".format(twoDImage.shape)
-
-# test_images, test_labels = load_mnist('testing', digits=[9])
-# image = test_images[500]
-imshow(image, cmap=cm.gray)
-show()
-print "image shape: {}".format(image.shape)
-decision = classifier.predict( image.ravel().reshape(1, -1) )
-print decision
+plt.show()

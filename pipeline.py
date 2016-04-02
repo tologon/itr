@@ -27,7 +27,9 @@ class Pipeline:
         # cv2.IMREAD_COLOR      : Loads a color image (default)
         # cv2.IMREAD_GRAYSCALE  : Loads image in grayscale mode
         # cv2.IMREAD_UNCHANGED  : Loads image as such including alpha channel
-        self.image = cv2.imread(DEFAULT_SINGLE_DIGIT, cv2.IMREAD_GRAYSCALE)
+
+        # add check for image existence on a given path
+        self.image = cv2.imread(image, cv2.IMREAD_GRAYSCALE)
 
     def detectRegions(self):
         mser = cv2.MSER_create()
@@ -69,12 +71,19 @@ class Pipeline:
 
 
 if __name__ == "__main__":
-    pipeline = Pipeline()
+    image, pipeline = None, None
+    if len(sys.argv) > 1:
+        image = str(sys.argv[1])
+        pipeline = Pipeline(image)
+    else:
+        pipeline = Pipeline()
     pipeline.detectRegions()
+
     print "regions: {}".format( len(pipeline.regions) )
     print "hulls: {}".format( len(pipeline.hulls) )
     print "rectangles: {}".format( len(pipeline.rectangles) )
     print "contours: {}".format( len(pipeline.contours) )
+
     pipeline.drawResult( pipeline.hulls, 'curve' )
     # pipeline.drawResult( pipeline.contours, 'curve' )
     pipeline.drawResult( pipeline.rectangles, 'straight' )

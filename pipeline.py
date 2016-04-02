@@ -23,6 +23,7 @@ class Pipeline:
     """
 
     def __init__(self, image = DEFAULT_SINGLE_DIGIT):
+        """ Reads and stores an image for future processing. """
         # possible options for image reading:
         # cv2.IMREAD_COLOR      : Loads a color image (default)
         # cv2.IMREAD_GRAYSCALE  : Loads image in grayscale mode
@@ -32,6 +33,10 @@ class Pipeline:
         self.image = cv2.imread(image, cv2.IMREAD_GRAYSCALE)
 
     def detectRegions(self):
+        """
+        Detects MSER regions and subsequently converting
+        those regions into convex hulls, rectangles, and contours.
+        """
         mser = cv2.MSER_create()
         bboxes = None # no documentation available
         self.regions = mser.detectRegions(self.image, bboxes)
@@ -40,12 +45,15 @@ class Pipeline:
         self.contours = self.regionsToContours()
 
     def regionsToHulls(self):
+        """ Converts present MSER regions into convex hulls. """
         return [ cv2.convexHull( r.reshape(-1, 1, 2) ) for r in self.regions ]
 
     def regionsToRectangles(self):
+        """ Converts present MSER regions into rectangles. """
         return [ cv2.boundingRect(region) for region in self.regions ]
 
     def regionsToContours(self):
+        """ Converts present MSER regions into contours. """
         closed = True
         contours = []
         for region in self.regions:
@@ -53,7 +61,9 @@ class Pipeline:
             contours.append( cv2.approxPolyDP(region, epsilon, closed) )
         return contours
 
+    # TODO: refactor resultType into something more sensible (w/o user input)
     def drawResult(self, result, resultType = RESULT_TYPE):
+        """ Draws a given result on the original image. """
         imageCopy = self.image.copy()
         isClosed = 1 # no documentation available
         if resultType == 'curve':
@@ -65,9 +75,12 @@ class Pipeline:
         cv2.destroyAllWindows()
 
     def drawRectangles(self, image, rectangles):
+        """ Draws rectangles on the image. """
         for rectangle in rectangles:
             x, y, w, h = rectangle
-            cv2.rectangle(image, (x, y), (x + w, y + h), DEFAULT_COLOR)
+            topLeftCorner = (x, y)
+            bottomRightCorner = (x + w, y + h)
+            cv2.rectangle(image, topLeftCorner, bottomRightCorner, DEFAULT_COLOR)
 
 
 if __name__ == "__main__":

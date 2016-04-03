@@ -6,10 +6,10 @@
 # ------------------------------------------------------------------------------
 
 # required package(s)
-import sys, cv2
+import sys, cv2, math
 import numpy as np
 
-from properties import aspectRatio, extent, solidity
+from properties import aspectRatio, extent, solidity, strokeWidthVariation, strokeWidthMetric
 
 # ignore sys.argv[0] as it is a name of an invoked Python script
 # print 'Number of arguments:', len(sys.argv[1:]), 'arguments.'
@@ -23,6 +23,7 @@ ASPECT_RATIO_THRESHOLD = 0.29
 LOW_EXTENT_THRESHOLD = 0.3
 HIGH_EXTENT_THRESHOLD = 0.59
 SOLIDITY_THRESHOLD = 1.1
+STROKE_WIDTH_THRESHOLD = 0.99
 
 class Pipeline:
     """
@@ -91,11 +92,12 @@ class Pipeline:
             # print "top left corner: {} | bottom right corner: {}".format(topLeftCorner, bottomRightCorner)
             cv2.rectangle(image, topLeftCorner, bottomRightCorner, DEFAULT_COLOR)
 
-    def filterByGeoProps(self, properties = []):
+    def filterByProperties(self, properties = []):
         """
-        Filters out convex hulls of an image by given geometric properties.
+        Filters out convex hulls of an image by given properties.
         """
         for prop in properties:
+            print "looping in properties"
             filterByProperty = getattr(self, 'filterBy' + prop)
             filterByProperty()
 
@@ -110,6 +112,12 @@ class Pipeline:
     def filterBySolidity(self):
         """ Filters out convex hulls of an image by solidity. """
         self.hulls = [hull for hull in self.hulls if solidity(hull) < SOLIDITY_THRESHOLD]
+
+    # TODO: add description
+    def filterByStrokeWidthVariation(self):
+        edges = [strokeWidthVariation(hull) for hull in self.hulls]
+        self.hulls = [hull for hull, edge in zip(self.hulls, edges) if strokeWidthMetric(edge) > STROKE_WIDTH_THRESHOLD or math.isnan(strokeWidthMetric(edge))]
+
 
 if __name__ == "__main__":
     image, pipeline = None, None
@@ -126,8 +134,8 @@ if __name__ == "__main__":
     # pipeline.drawResults( pipeline.contours, 'curve' )
     pipeline.drawResults( pipeline.rectangles, 'straight' )
 
-    properties = ['AspectRatio', 'Extent', 'Solidity']
-    pipeline.filterByGeoProps(properties)
+    properties = ['AspectRatio', 'Extent', 'Solidity', 'StrokeWidthVariation']
+    pipeline.filterByProperties(properties)
     print "after filtering by geometric properties, hulls: {}".format( len(pipeline.hulls) )
 
     pipeline.drawResults( pipeline.rectangles, 'straight' )

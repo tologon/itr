@@ -1,8 +1,8 @@
-import cv2, math, mnist
+import cv2, math
 import numpy as np
 from sklearn import svm
 
-img = cv2.imread('test_image8.png', 0)
+img = cv2.imread('default_single_digit.png', 0)
 # Pipeline - MSER detection
 mser = cv2.MSER_create()
 

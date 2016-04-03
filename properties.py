@@ -7,6 +7,7 @@
 
 # required package(s)
 import cv2
+import numpy as np
 
 def aspectRatio(convexHull):
     """
@@ -35,3 +36,14 @@ def solidity(convexHull):
     area = cv2.contourArea(convexHull)
     hullArea = cv2.contourArea(convexHull)
     return float(area) / hullArea
+
+# TODO: add description
+def strokeWidthVariation(convexHull):
+    convexHull = convexHull.transpose(2,0,1).reshape(2,-1)
+    convexHull = np.uint8(convexHull)
+    edge = cv2.Canny(convexHull, 100, 200)
+    return edge
+
+# TODO: add description
+def strokeWidthMetric(stroke):
+    return np.std(stroke) / np.mean(stroke)

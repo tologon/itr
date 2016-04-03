@@ -23,6 +23,7 @@ LOW_EXTENT_THRESHOLD = 0.3
 HIGH_EXTENT_THRESHOLD = 0.59
 SOLIDITY_THRESHOLD = 1.1
 STROKE_WIDTH_THRESHOLD = 0.99
+GROUP_THRESHOLD = 1 # minimum possible number of rectangles - 1
 
 class Pipeline:
     """
@@ -122,6 +123,14 @@ class Pipeline:
         edges = [strokeWidthVariation(hull) for hull in self.hulls]
         self.hulls = [hull for hull, edge in zip(self.hulls, edges) if strokeWidthMetric(edge) > STROKE_WIDTH_THRESHOLD or math.isnan(strokeWidthMetric(edge))]
 
+    def groupRegions(self, threshold = GROUP_THRESHOLD):
+        """
+        Groups the present rectangles with similar sizes and similar locations.
+        Package cv2 function also returns weight of each grouped rectangle;
+        however, those values are of no use in current program, and are ignored.
+        """
+        (self.rectangles, weights) = cv2.groupRectangles(self.rectangles, threshold)
+
 
 if __name__ == "__main__":
     image, pipeline = None, None
@@ -132,7 +141,7 @@ if __name__ == "__main__":
         pipeline = Pipeline()
     pipeline.detectRegions()
 
-    print "original hulls: {}".format( len(pipeline.hulls) )
+    print "before any changes, original hulls: {}".format( len(pipeline.rectangles) )
 
     # pipeline.drawResults(pipeline.hulls)
     # pipeline.drawResults(pipeline.contours)
@@ -140,6 +149,9 @@ if __name__ == "__main__":
 
     properties = ['AspectRatio', 'Extent', 'Solidity', 'StrokeWidthVariation']
     pipeline.filterByProperties(properties)
-    print "after properties' filters, hulls: {}".format( len(pipeline.hulls) )
+    print "after properties' filters, hulls: {}".format( len(pipeline.rectangles) )
+    pipeline.drawResults(pipeline.rectangles)
 
+    pipeline.groupRegions(1)
+    print "after grouping regions, hulls: {}".format( len(pipeline.rectangles) )
     pipeline.drawResults(pipeline.rectangles)

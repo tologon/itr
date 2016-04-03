@@ -37,13 +37,16 @@ def solidity(convexHull):
     hullArea = cv2.contourArea(convexHull)
     return float(area) / hullArea
 
-# TODO: add description
 def strokeWidthVariation(convexHull):
+    """
+    Finds edges in a convex hull by converting
+    convex hull into an approriate shape.
+    """
     convexHull = convexHull.transpose(2,0,1).reshape(2,-1)
     convexHull = np.uint8(convexHull)
     edge = cv2.Canny(convexHull, 100, 200)
     return edge
 
-# TODO: add description
 def strokeWidthMetric(stroke):
+    """ Calculates stroke width variation for a given stroke. """
     return np.std(stroke) / np.mean(stroke)

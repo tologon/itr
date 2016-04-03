@@ -17,7 +17,6 @@ from properties import aspectRatio, extent, solidity, strokeWidthVariation, stro
 
 # constants
 DEFAULT_SINGLE_DIGIT = 'default_single_digit.png'
-RESULT_TYPE = 'curve'
 DEFAULT_COLOR = (0, 255, 0) # RGB values; doesn't matter on grayscale
 ASPECT_RATIO_THRESHOLD = 0.29
 LOW_EXTENT_THRESHOLD = 0.3
@@ -70,15 +69,16 @@ class Pipeline:
             contours.append( cv2.approxPolyDP(region, epsilon, closed) )
         return contours
 
-    # TODO: refactor resultType into something more sensible (w/o user input)
-    def drawResults(self, results, resultType = RESULT_TYPE):
+    def drawResults(self, results):
         """ Draws given results on the original image. """
         imageCopy = self.image.copy()
         isClosed = 1 # no documentation available
-        if resultType == 'curve':
-            cv2.polylines(imageCopy, results, isClosed, DEFAULT_COLOR)
-        elif resultType == 'straight':
+        # the results are in a form of rectangles
+        if len(results[0]) == 4:
             self.drawRectangles(imageCopy, results)
+        # the results are in a form of convex hulls
+        else:
+            cv2.polylines(imageCopy, results, isClosed, DEFAULT_COLOR)
         cv2.imshow('Results', imageCopy)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
@@ -97,24 +97,28 @@ class Pipeline:
         Filters out convex hulls of an image by given properties.
         """
         for prop in properties:
-            print "looping in properties"
+            # print "looping in properties"
             filterByProperty = getattr(self, 'filterBy' + prop)
             filterByProperty()
 
+    # TODO: refactor for readability
     def filterByAspectRatio(self):
         """ Filters out convex hulls of an image by aspect ratio. """
         self.hulls = [hull for hull in self.hulls if aspectRatio(hull) > ASPECT_RATIO_THRESHOLD]
 
+    # TODO: refactor for readability
     def filterByExtent(self):
         """ Filters out convex hulls of an image by extent. """
         self.hulls = [hull for hull in self.hulls if extent(hull) < LOW_EXTENT_THRESHOLD or extent(hull) > HIGH_EXTENT_THRESHOLD]
 
+    # TODO: refactor for readability
     def filterBySolidity(self):
         """ Filters out convex hulls of an image by solidity. """
         self.hulls = [hull for hull in self.hulls if solidity(hull) < SOLIDITY_THRESHOLD]
 
-    # TODO: add description
+    # TODO: refactor for readability
     def filterByStrokeWidthVariation(self):
+        """ Filters out convex hulls of an image by stroke width variation. """
         edges = [strokeWidthVariation(hull) for hull in self.hulls]
         self.hulls = [hull for hull, edge in zip(self.hulls, edges) if strokeWidthMetric(edge) > STROKE_WIDTH_THRESHOLD or math.isnan(strokeWidthMetric(edge))]
 
@@ -130,12 +134,12 @@ if __name__ == "__main__":
 
     print "original hulls: {}".format( len(pipeline.hulls) )
 
-    # pipeline.drawResults( pipeline.hulls, 'curve' )
-    # pipeline.drawResults( pipeline.contours, 'curve' )
-    pipeline.drawResults( pipeline.rectangles, 'straight' )
+    # pipeline.drawResults(pipeline.hulls)
+    # pipeline.drawResults(pipeline.contours)
+    pipeline.drawResults(pipeline.rectangles)
 
     properties = ['AspectRatio', 'Extent', 'Solidity', 'StrokeWidthVariation']
     pipeline.filterByProperties(properties)
-    print "after filtering by geometric properties, hulls: {}".format( len(pipeline.hulls) )
+    print "after properties' filters, hulls: {}".format( len(pipeline.hulls) )
 
-    pipeline.drawResults( pipeline.rectangles, 'straight' )
+    pipeline.drawResults(pipeline.rectangles)

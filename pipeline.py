@@ -1,11 +1,15 @@
+# ------------------------------------------------------------------------------
 # Author:   Tologon Eshimkanov (https://github.com/tologon)
 # Course:   COMP 3770-01 - Introduction to Artificial Intelligence
 # School:   Wentworth Institute of Technology
 # Project:  Image Text Recognition
+# ------------------------------------------------------------------------------
 
 # required package(s)
 import sys, cv2
 import numpy as np
+
+from properties import aspectRatio, extent, solidity
 
 # ignore sys.argv[0] as it is a name of an invoked Python script
 # print 'Number of arguments:', len(sys.argv[1:]), 'arguments.'
@@ -15,6 +19,10 @@ import numpy as np
 DEFAULT_SINGLE_DIGIT = 'default_single_digit.png'
 RESULT_TYPE = 'curve'
 DEFAULT_COLOR = (0, 255, 0) # RGB values; doesn't matter on grayscale
+ASPECT_RATIO_THRESHOLD = 0.29
+LOW_EXTENT_THRESHOLD = 0.3
+HIGH_EXTENT_THRESHOLD = 0.59
+SOLIDITY_THRESHOLD = 1.1
 
 class Pipeline:
     """
@@ -40,7 +48,7 @@ class Pipeline:
         mser = cv2.MSER_create()
         bboxes = None # no documentation available
         self.regions = mser.detectRegions(self.image, bboxes)
-        self.hulls = self.regionsToHulls()
+        self.hulls = self.regionsToHulls() # hulls == convex hulls
         self.rectangles = self.regionsToRectangles()
         self.contours = self.regionsToContours()
 
@@ -62,15 +70,15 @@ class Pipeline:
         return contours
 
     # TODO: refactor resultType into something more sensible (w/o user input)
-    def drawResult(self, result, resultType = RESULT_TYPE):
-        """ Draws a given result on the original image. """
+    def drawResults(self, results, resultType = RESULT_TYPE):
+        """ Draws given results on the original image. """
         imageCopy = self.image.copy()
         isClosed = 1 # no documentation available
         if resultType == 'curve':
-            cv2.polylines(imageCopy, result, isClosed, DEFAULT_COLOR)
+            cv2.polylines(imageCopy, results, isClosed, DEFAULT_COLOR)
         elif resultType == 'straight':
-            self.drawRectangles(imageCopy, result)
-        cv2.imshow('Result', imageCopy)
+            self.drawRectangles(imageCopy, results)
+        cv2.imshow('Results', imageCopy)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
@@ -80,8 +88,28 @@ class Pipeline:
             x, y, w, h = rectangle
             topLeftCorner = (x, y)
             bottomRightCorner = (x + w, y + h)
+            # print "top left corner: {} | bottom right corner: {}".format(topLeftCorner, bottomRightCorner)
             cv2.rectangle(image, topLeftCorner, bottomRightCorner, DEFAULT_COLOR)
 
+    def filterByGeoProps(self, properties = []):
+        """
+        Filters out convex hulls of an image by given geometric properties.
+        """
+        for prop in properties:
+            filterByProperty = getattr(self, 'filterBy' + prop)
+            filterByProperty()
+
+    def filterByAspectRatio(self):
+        """ Filters out convex hulls of an image by aspect ratio. """
+        self.hulls = [hull for hull in self.hulls if aspectRatio(hull) > ASPECT_RATIO_THRESHOLD]
+
+    def filterByExtent(self):
+        """ Filters out convex hulls of an image by extent. """
+        self.hulls = [hull for hull in self.hulls if extent(hull) < LOW_EXTENT_THRESHOLD or extent(hull) > HIGH_EXTENT_THRESHOLD]
+
+    def filterBySolidity(self):
+        """ Filters out convex hulls of an image by solidity. """
+        self.hulls = [hull for hull in self.hulls if solidity(hull) < SOLIDITY_THRESHOLD]
 
 if __name__ == "__main__":
     image, pipeline = None, None
@@ -92,11 +120,14 @@ if __name__ == "__main__":
         pipeline = Pipeline()
     pipeline.detectRegions()
 
-    print "regions: {}".format( len(pipeline.regions) )
-    print "hulls: {}".format( len(pipeline.hulls) )
-    print "rectangles: {}".format( len(pipeline.rectangles) )
-    print "contours: {}".format( len(pipeline.contours) )
+    print "original hulls: {}".format( len(pipeline.hulls) )
 
-    pipeline.drawResult( pipeline.hulls, 'curve' )
-    # pipeline.drawResult( pipeline.contours, 'curve' )
-    pipeline.drawResult( pipeline.rectangles, 'straight' )
+    # pipeline.drawResults( pipeline.hulls, 'curve' )
+    # pipeline.drawResults( pipeline.contours, 'curve' )
+    pipeline.drawResults( pipeline.rectangles, 'straight' )
+
+    properties = ['AspectRatio', 'Extent', 'Solidity']
+    pipeline.filterByGeoProps(properties)
+    print "after filtering by geometric properties, hulls: {}".format( len(pipeline.hulls) )
+
+    pipeline.drawResults( pipeline.rectangles, 'straight' )

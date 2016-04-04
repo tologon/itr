@@ -10,6 +10,7 @@ import sys, cv2, math, mnist
 import numpy as np
 
 from properties import aspectRatio, extent, solidity, strokeWidthVariation, strokeWidthMetric
+from mnist import plt
 
 # ignore sys.argv[0] as it is a name of an invoked Python script
 # print 'Number of arguments:', len(sys.argv[1:]), 'arguments.'
@@ -137,18 +138,29 @@ class Pipeline:
         images = []
         for i, d in enumerate(digits):
             x, y, w, h = d
+            x, w = x - 10, w + 20 # scaling digit to MNIST-based size
             digit = self.image[y:(y + h), x:(x + w)]
             # cv2.imwrite('test-' + str(i) + '.png', digit)
             image = cv2.resize( digit, (width, height) )
-            images.append(image)
+            images.append( np.invert(image) )
+            # images.append(image)
 
         images = np.array(images)
         n_samples = len(images)
         data = images.ravel().reshape( (n_samples, -1) )
-        print "data shape: {}".format(data.shape)
+        # print "data shape: {}".format(data.shape)
 
         expected = values
         predicted = classifier.predict(data)
+
+        images_and_predictions = list(zip(images, predicted))
+        for index, (image, label) in enumerate(images_and_predictions):
+            plt.subplot(2, 4, index + 5)
+            plt.axis('off')
+            plt.imshow(image, cmap=plt.cm.gray_r, interpolation='nearest')
+            plt.title('Prediction: %i' % label)
+        plt.show()
+
         return (predicted, predicted == expected)
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@
 # ------------------------------------------------------------------------------
 
 # required package(s)
-import sys, cv2, math
+import sys, cv2, math, mnist
 import numpy as np
 
 from properties import aspectRatio, extent, solidity, strokeWidthVariation, strokeWidthMetric
@@ -131,6 +131,25 @@ class Pipeline:
         """
         (self.rectangles, weights) = cv2.groupRectangles(self.rectangles, threshold)
 
+    # TODO: add description
+    def predict(self, digits, values, classifier = mnist.classifier):
+        width, height = 8, 8
+        images = []
+        for i, d in enumerate(digits):
+            x, y, w, h = d
+            digit = self.image[y:(y + h), x:(x + w)]
+            # cv2.imwrite('test-' + str(i) + '.png', digit)
+            image = cv2.resize( digit, (width, height) )
+            images.append(image)
+
+        images = np.array(images)
+        n_samples = len(images)
+        data = images.ravel().reshape( (n_samples, -1) )
+        print "data shape: {}".format(data.shape)
+
+        expected = values
+        predicted = classifier.predict(data)
+        return (predicted, predicted == expected)
 
 if __name__ == "__main__":
     image, pipeline = None, None
@@ -141,7 +160,7 @@ if __name__ == "__main__":
         pipeline = Pipeline()
     pipeline.detectRegions()
 
-    print "before any changes, original hulls: {}".format( len(pipeline.rectangles) )
+    print "before any changes, original rectangles: {}".format( len(pipeline.rectangles) )
 
     # pipeline.drawResults(pipeline.hulls)
     # pipeline.drawResults(pipeline.contours)
@@ -149,9 +168,13 @@ if __name__ == "__main__":
 
     properties = ['AspectRatio', 'Extent', 'Solidity', 'StrokeWidthVariation']
     pipeline.filterByProperties(properties)
-    print "after properties' filters, hulls: {}".format( len(pipeline.rectangles) )
+    print "after properties' filters, rectangles: {}".format( len(pipeline.rectangles) )
     pipeline.drawResults(pipeline.rectangles)
 
-    pipeline.groupRegions(1)
-    print "after grouping regions, hulls: {}".format( len(pipeline.rectangles) )
+    pipeline.groupRegions()
+    print "after grouping regions, rectangles: {}".format( len(pipeline.rectangles) )
     pipeline.drawResults(pipeline.rectangles)
+
+    result, correctness = pipeline.predict(pipeline.rectangles, [2, 6, 9])
+    print "the predicted value of digits: {}".format(result)
+    print "does the predicted values matches the actual values? {}".format(correctness)

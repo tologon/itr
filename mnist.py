@@ -16,40 +16,43 @@ digits = datasets.load_digits()
 # pylab.imread.  Note that each image must have the same size. For these
 # images, we know which digit they represent: it is given in the 'target' of
 # the dataset.
-images_and_labels = list(zip(digits.images, digits.target))
-for index, (image, label) in enumerate(images_and_labels[:4]):
-    plt.subplot(2, 4, index + 1)
-    plt.axis('off')
-    plt.imshow(image, cmap=plt.cm.gray_r, interpolation='nearest')
-    plt.title('Training: %i' % label)
+# images_and_labels = list(zip(digits.images, digits.target))
+# for index, (image, label) in enumerate(images_and_labels[:4]):
+#     plt.subplot(2, 4, index + 1)
+#     plt.axis('off')
+#     plt.imshow(image, cmap=plt.cm.gray_r, interpolation='nearest')
+#     plt.title('Training: %i' % label)
 
 # To apply a classifier on this data, we need to flatten the image, to
 # turn the data in a (samples, feature) matrix:
 n_samples = len(digits.images)
+# print "digits.images type: {}".format( type(digits.images) )
+# print "digits.images shape: {}".format( digits.images.shape )
 data = digits.images.reshape((n_samples, -1))
 
 # Create a classifier: a support vector classifier
-classifier = svm.SVC(gamma=0.001)
+classifier = svm.SVC()
 
 # We learn the digits on the first half of the digits
-# print "CUSTOM PRINT: {}".format( data.shape )
-# print "CUSTOM PRINT: {}".format( type(data) )
-# print "CUSTOM PRINT: {}".format( data[:n_samples / 2] )
-classifier.fit(data[:n_samples / 2], digits.target[:n_samples / 2])
+# print "MNIST data: {}".format( data[0].shape )
+# print "MNIST data: {}".format( type(data[0]) )
+# print "MNIST data: {}".format( data[0] )
+# classifier.fit(data[:n_samples / 2], digits.target[:n_samples / 2])
+classifier.fit(data, digits.target)
 
 # Now predict the value of the digit on the second half:
-expected = digits.target[n_samples / 2:]
-predicted = classifier.predict(data[n_samples / 2:])
+# expected = digits.target[n_samples / 2:]
+# predicted = classifier.predict(data[n_samples / 2:])
 
-print("Classification report for classifier %s:\n%s\n"
-      % (classifier, metrics.classification_report(expected, predicted)))
-print("Confusion matrix:\n%s" % metrics.confusion_matrix(expected, predicted))
-
-images_and_predictions = list(zip(digits.images[n_samples / 2:], predicted))
-for index, (image, prediction) in enumerate(images_and_predictions[:4]):
-    plt.subplot(2, 4, index + 5)
-    plt.axis('off')
-    plt.imshow(image, cmap=plt.cm.gray_r, interpolation='nearest')
-    plt.title('Prediction: %i' % prediction)
-
-plt.show()
+# print("Classification report for classifier %s:\n%s\n"
+#       % (classifier, metrics.classification_report(expected, predicted)))
+# print("Confusion matrix:\n%s" % metrics.confusion_matrix(expected, predicted))
+#
+# images_and_predictions = list(zip(digits.images[n_samples / 2:], predicted))
+# for index, (image, prediction) in enumerate(images_and_predictions[:4]):
+#     plt.subplot(2, 4, index + 5)
+#     plt.axis('off')
+#     plt.imshow(image, cmap=plt.cm.gray_r, interpolation='nearest')
+#     plt.title('Prediction: %i' % prediction)
+#
+# plt.show()

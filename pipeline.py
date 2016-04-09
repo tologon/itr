@@ -19,7 +19,7 @@ from mnist import plt
 # constants
 DEFAULT_SINGLE_DIGIT = 'default_single_digit.png'
 DEFAULT_COLOR = (0, 255, 0) # RGB values; doesn't matter on grayscale
-ASPECT_RATIO_THRESHOLD = 0.29
+ASPECT_RATIO_THRESHOLD = 0.5
 LOW_EXTENT_THRESHOLD = 0.3
 HIGH_EXTENT_THRESHOLD = 0.59
 SOLIDITY_THRESHOLD = 1.1
@@ -76,7 +76,9 @@ class Pipeline:
         imageCopy = self.image.copy()
         isClosed = 1 # no documentation available
         # the results are in a form of rectangles
-        if len(results[0]) == 4:
+        if len(results) == 0:
+            print "no digits detected, cannot draw results."
+        elif len(results[0]) == 4:
             self.drawRectangles(imageCopy, results)
         # the results are in a form of convex hulls
         else:
@@ -102,6 +104,7 @@ class Pipeline:
             # print "looping in properties"
             filterByProperty = getattr(self, 'filterBy' + prop)
             filterByProperty()
+        self.rectangles = self.regionsToRectangles()
 
     # TODO: refactor for readability
     def filterByAspectRatio(self):
@@ -130,7 +133,9 @@ class Pipeline:
         Package cv2 function also returns weight of each grouped rectangle;
         however, those values are of no use in current program, and are ignored.
         """
-        (self.rectangles, weights) = cv2.groupRectangles(self.rectangles, threshold)
+        futureRectangles, weights = cv2.groupRectangles(self.rectangles, threshold)
+        if len(futureRectangles) != 0:
+            self.rectangles = futureRectangles
 
     # TODO: add description
     def predict(self, digits, values, classifier = mnist.classifier):
@@ -152,6 +157,9 @@ class Pipeline:
 
         expected = values
         predicted = classifier.predict(data)
+
+        if len(images) > 4:
+            images = images[:4]
 
         images_and_predictions = list(zip(images, predicted))
         for index, (image, label) in enumerate(images_and_predictions):

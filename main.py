@@ -6,18 +6,8 @@
 # ------------------------------------------------------------------------------
 
 # required package(s)
-import argparse
+import argparse, sys
 from pipeline import Pipeline
-
-# constants
-DEFAULT_SINGLE_DIGIT = 'default_single_digit.png'
-DEFAULT_COLOR = (0, 255, 0) # RGB values; doesn't matter on grayscale
-ASPECT_RATIO_THRESHOLD = 0.5
-LOW_EXTENT_THRESHOLD = 0.3
-HIGH_EXTENT_THRESHOLD = 0.59
-SOLIDITY_THRESHOLD = 1.1
-STROKE_WIDTH_THRESHOLD = 0.99
-GROUP_THRESHOLD = 1 # minimum possible number of rectangles - 1
 
 if __name__ == "__main__":
     image, pipeline = None, None
@@ -26,22 +16,22 @@ if __name__ == "__main__":
         pipeline = Pipeline(image)
     else:
         pipeline = Pipeline()
-    pipeline.detectRegions()
+    pipeline.detect_regions()
 
     print "before any changes, original rectangles: {}".format( len(pipeline.rectangles) )
 
-    # pipeline.drawResults(pipeline.hulls)
-    # pipeline.drawResults(pipeline.contours)
-    pipeline.drawResults(pipeline.rectangles)
+    # pipeline.draw_results(pipeline.hulls)
+    # pipeline.draw_results(pipeline.contours)
+    pipeline.draw_results(pipeline.rectangles)
 
-    properties = ['AspectRatio', 'Extent', 'Solidity', 'StrokeWidthVariation']
-    pipeline.filterByProperties(properties)
+    properties = ['aspect_ratio', 'extent', 'solidity', 'SWV']
+    pipeline.props_filter(properties)
     print "after properties' filters, rectangles: {}".format( len(pipeline.rectangles) )
-    pipeline.drawResults(pipeline.rectangles)
+    pipeline.draw_results(pipeline.rectangles)
 
-    pipeline.groupRegions()
+    pipeline.group_regions()
     print "after grouping regions, rectangles: {}".format( len(pipeline.rectangles) )
-    pipeline.drawResults(pipeline.rectangles)
+    pipeline.draw_results(pipeline.rectangles)
 
     result, correctness = pipeline.predict(pipeline.rectangles, [2, 6, 9])
     print "the predicted value of digits: {}".format(result)

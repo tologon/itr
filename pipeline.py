@@ -6,15 +6,25 @@
 # ------------------------------------------------------------------------------
 
 # required package(s)
-import sys, cv2, math, mnist
+import sys, cv2, math, classifier
 import numpy as np
 
-from properties import aspectRatio, extent, solidity, strokeWidthVariation, strokeWidthMetric
-from mnist import plt
+from utilities import *
+from classifier import plt
 
 # ignore sys.argv[0] as it is a name of an invoked Python script
 # print 'Number of arguments:', len(sys.argv[1:]), 'arguments.'
 # print 'Argument list:', str(sys.argv[1:])
+
+# constants
+DEFAULT_SINGLE_DIGIT = 'default_single_digit.png'
+DEFAULT_COLOR = (0, 255, 0) # RGB values; doesn't matter on grayscale
+ASPECT_RATIO_THRESHOLD = 1
+LOW_EXTENT_THRESHOLD = 0.3
+HIGH_EXTENT_THRESHOLD = 0.59
+SOLIDITY_THRESHOLD = 1.1
+STROKE_WIDTH_THRESHOLD = 0.99
+GROUP_THRESHOLD = 1 # minimum possible number of rectangles - 1
 
 class Pipeline:
     """
@@ -32,7 +42,7 @@ class Pipeline:
         # add check for image existence on a given path
         self.image = cv2.imread(image, cv2.IMREAD_GRAYSCALE)
 
-    def detectRegions(self):
+    def detect_regions(self):
         """
         Detects MSER regions and subsequently converting
         those regions into convex hulls, rectangles, and contours.
@@ -40,28 +50,22 @@ class Pipeline:
         mser = cv2.MSER_create()
         bboxes = None # no documentation available
         self.regions = mser.detectRegions(self.image, bboxes)
-        self.hulls = self.regionsToHulls() # hulls == convex hulls
-        self.rectangles = self.regionsToRectangles()
-        self.contours = self.regionsToContours()
+        self.hulls = self.regions_to_hulls() # hulls == convex hulls
+        self.rectangles = self.regions_to_rectangles()
 
-    def regionsToHulls(self):
+    def regions_to_hulls(self):
         """ Converts present MSER regions into convex hulls. """
         return [ cv2.convexHull( r.reshape(-1, 1, 2) ) for r in self.regions ]
 
-    def regionsToRectangles(self):
+    def regions_to_rectangles(self):
         """ Converts present MSER regions into rectangles. """
         return [ cv2.boundingRect(region) for region in self.regions ]
 
-    def regionsToContours(self):
-        """ Converts present MSER regions into contours. """
-        closed = True
-        contours = []
-        for region in self.regions:
-            epsilon = 0.01 * cv2.arcLength(region, True)
-            contours.append( cv2.approxPolyDP(region, epsilon, closed) )
-        return contours
+    def hulls_to_rectangles(self):
+        """ Converts present convex hull into rectangles. """
+        return [ cv2.boundingRect(hull) for hull in self.hulls ]
 
-    def drawResults(self, results):
+    def draw_results(self, results):
         """ Draws given results on the original image. """
         imageCopy = self.image.copy()
         isClosed = 1 # no documentation available
@@ -69,7 +73,7 @@ class Pipeline:
         if len(results) == 0:
             print "no digits detected, cannot draw results."
         elif len(results[0]) == 4:
-            self.drawRectangles(imageCopy, results)
+            self.draw_rectangles(imageCopy, results)
         # the results are in a form of convex hulls
         else:
             cv2.polylines(imageCopy, results, isClosed, DEFAULT_COLOR)
@@ -77,7 +81,7 @@ class Pipeline:
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
-    def drawRectangles(self, image, rectangles):
+    def draw_rectangles(self, image, rectangles):
         """ Draws rectangles on the image. """
         for rectangle in rectangles:
             x, y, w, h = rectangle
@@ -86,38 +90,38 @@ class Pipeline:
             # print "top left corner: {} | bottom right corner: {}".format(topLeftCorner, bottomRightCorner)
             cv2.rectangle(image, topLeftCorner, bottomRightCorner, DEFAULT_COLOR)
 
-    def filterByProperties(self, properties = []):
+    def props_filter(self, properties = []):
         """
         Filters out convex hulls of an image by given properties.
         """
         for prop in properties:
             # print "looping in properties"
-            filterByProperty = getattr(self, 'filterBy' + prop)
-            filterByProperty()
-        self.rectangles = self.regionsToRectangles()
+            prop_filter = getattr(self, prop + '_filter')
+            prop_filter()
+        self.rectangles = self.hulls_to_rectangles()
 
     # TODO: refactor for readability
-    def filterByAspectRatio(self):
+    def aspect_ratio_filter(self):
         """ Filters out convex hulls of an image by aspect ratio. """
-        self.hulls = [hull for hull in self.hulls if aspectRatio(hull) > ASPECT_RATIO_THRESHOLD]
+        self.hulls = [hull for hull in self.hulls if aspect_ratio(hull) < ASPECT_RATIO_THRESHOLD]
 
     # TODO: refactor for readability
-    def filterByExtent(self):
+    def extent_filter(self):
         """ Filters out convex hulls of an image by extent. """
         self.hulls = [hull for hull in self.hulls if extent(hull) < LOW_EXTENT_THRESHOLD or extent(hull) > HIGH_EXTENT_THRESHOLD]
 
     # TODO: refactor for readability
-    def filterBySolidity(self):
+    def solidity_filter(self):
         """ Filters out convex hulls of an image by solidity. """
         self.hulls = [hull for hull in self.hulls if solidity(hull) < SOLIDITY_THRESHOLD]
 
     # TODO: refactor for readability
-    def filterByStrokeWidthVariation(self):
+    def SWV_filter(self):
         """ Filters out convex hulls of an image by stroke width variation. """
-        edges = [strokeWidthVariation(hull) for hull in self.hulls]
-        self.hulls = [hull for hull, edge in zip(self.hulls, edges) if strokeWidthMetric(edge) > STROKE_WIDTH_THRESHOLD or math.isnan(strokeWidthMetric(edge))]
+        edges = [stroke_width_variation(hull) for hull in self.hulls]
+        self.hulls = [hull for hull, edge in zip(self.hulls, edges) if SWV_metric(edge) > STROKE_WIDTH_THRESHOLD or math.isnan(SWV_metric(edge))]
 
-    def groupRegions(self, threshold = GROUP_THRESHOLD):
+    def group_regions(self, threshold = GROUP_THRESHOLD):
         """
         Groups the present rectangles with similar sizes and similar locations.
         Package cv2 function also returns weight of each grouped rectangle;
@@ -128,7 +132,7 @@ class Pipeline:
             self.rectangles = futureRectangles
 
     # TODO: add description
-    def predict(self, digits, values, classifier = mnist.classifier):
+    def predict(self, digits, values, classifier = classifier.classifier):
         width, height = 8, 8
         images = []
         for i, d in enumerate(digits):

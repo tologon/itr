@@ -6,33 +6,63 @@
 # ------------------------------------------------------------------------------
 
 # required package(s)
-import argparse, sys
-from pipeline import Pipeline
+import argparse
+from pipeline import Pipeline, DEFAULT_SINGLE_DIGIT, DEFAULT_MULTIPLE_DIGIT
 
-if __name__ == "__main__":
-    image, pipeline = None, None
-    if len(sys.argv) > 1:
-        image = str(sys.argv[1])
-        pipeline = Pipeline(image)
+# TODO: add description
+def parse_options():
+    parser = argparse.ArgumentParser(description="recognize digit(s) in image",
+                                        add_help=False)
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-i", "--image", type=str,
+                        help="image containing digit(s)")
+    group.add_argument("-e", "--example", choices=["single", "multiple"],
+                         type=str, help="use one of default images")
+    parser.add_argument("-d", "--digits", nargs="+",
+                        type=int, help="actual values of digit(s) in the image")
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="increase output verbosity")
+    parser.add_argument("-h", "--help", action="help",
+                        help="display information about script")
+    return parser.parse_args()
+
+# TODO: add description
+def initialize_pipeline():
+    pipeline = None
+    if args.image:
+        pipeline = Pipeline(args.image)
+    elif args.example:
+        if args.example == 'single':
+            pipeline = Pipeline(DEFAULT_SINGLE_DIGIT)
+        elif args.example == 'multiple':
+            pipeline = Pipeline(DEFAULT_MULTIPLE_DIGIT)
     else:
         pipeline = Pipeline()
+    return pipeline
+
+# TODO: add description
+def output(message, pipeline):
+    if args.verbose:
+        num_rectangles = len(pipeline.rectangles)
+        print "{}, # of rectangles: {}".format(message, num_rectangles)
+        pipeline.draw_results( pipeline.rectangles )
+
+args = parse_options()
+
+if __name__ == "__main__":
+    pipeline = initialize_pipeline()
+
     pipeline.detect_regions()
-
-    print "before any changes, original rectangles: {}".format( len(pipeline.rectangles) )
-
-    # pipeline.draw_results(pipeline.hulls)
-    # pipeline.draw_results(pipeline.contours)
-    pipeline.draw_results(pipeline.rectangles)
+    output("before changes", pipeline)
 
     properties = ['aspect_ratio', 'extent', 'solidity', 'SWV']
     pipeline.props_filter(properties)
-    print "after properties' filters, rectangles: {}".format( len(pipeline.rectangles) )
-    pipeline.draw_results(pipeline.rectangles)
+    output("after filters", pipeline)
 
     pipeline.group_regions()
-    print "after grouping regions, rectangles: {}".format( len(pipeline.rectangles) )
-    pipeline.draw_results(pipeline.rectangles)
+    output("after grouping", pipeline)
 
-    result, correctness = pipeline.predict(pipeline.rectangles, [2, 6, 9])
-    print "the predicted value of digits: {}".format(result)
-    print "does the predicted values matches the actual values? {}".format(correctness)
+    result = pipeline.predict(pipeline.rectangles)
+    print "the predicted value(s) of digit(s): {}".format(result)
+    if args.digits:
+        print "correctness of prediction(s): {}".format(result == args.digits)

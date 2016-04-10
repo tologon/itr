@@ -14,7 +14,8 @@ from classifier import plt
 # ------------------------
 
 # constants
-DEFAULT_IMAGE = 'default_single_digit.png'
+DEFAULT_SINGLE_DIGIT = 'default_single_digit.png'
+DEFAULT_MULTIPLE_DIGIT = 'default_multiple_digits.png'
 DEFAULT_COLOR = (0, 255, 0) # RGB values; doesn't matter on grayscale
 ASPECT_RATIO_THRESHOLD = 1
 LOW_EXTENT_THRESHOLD = 0.3
@@ -29,7 +30,7 @@ class Pipeline:
     any present digits with some degree of accuracy.
     """
 
-    def __init__(self, image = DEFAULT_IMAGE):
+    def __init__(self, image = DEFAULT_SINGLE_DIGIT):
         """
         Reads and stores an image for future processing.
         possible options for image reading:
@@ -39,7 +40,7 @@ class Pipeline:
         """
         self.image = cv2.imread(image, cv2.IMREAD_GRAYSCALE)
         if self.image is None:
-            raise Exception( "Cannot find the image {}.".format(image) )
+            raise Exception( "Cannot find the image -  {}.".format(image) )
 
     def detect_regions(self):
         """
@@ -158,12 +159,11 @@ class Pipeline:
         plt.show()
 
     # TODO: add description
-    def predict(self, digits, values, clf = classifier.classifier):
+    def predict(self, digits, clf = classifier.classifier):
         digits = self.resize_digits(digits)
         n_samples = len(digits)
         data = digits.ravel().reshape( (n_samples, -1) )
 
-        expected = values
         predicted = clf.predict(data)
 
         if len(digits) > 4:
@@ -171,4 +171,4 @@ class Pipeline:
 
         self.plot_results(digits, predicted)
 
-        return (predicted, predicted == expected)
+        return predicted

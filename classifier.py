@@ -43,7 +43,9 @@ k_fold = 10
 scores = cross_validation.cross_val_score(
     classifier, data, digits.target, cv=k_fold
 )
-print("SVM classifier accuracy (on 10-fold cross-validation): %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+
+print("SVM classifier accuracy (on 10-fold cross-validation): \
+      %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
 # We learn the digits on the first half of the digits
 classifier.fit(data, digits.target)

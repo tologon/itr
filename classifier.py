@@ -1,6 +1,13 @@
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # License: BSD 3 clause
 
+# ------------------------------------------------------------------------------
+# Author:   Tologon Eshimkanov (https://github.com/tologon)
+# Course:   COMP 3770-01 - Introduction to Artificial Intelligence
+# School:   Wentworth Institute of Technology
+# Project:  Simplified Digit Recognition
+# ------------------------------------------------------------------------------
+
 # Standard scientific Python imports
 import matplotlib.pyplot as plt
 

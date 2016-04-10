@@ -12,7 +12,7 @@
 import matplotlib.pyplot as plt
 
 # Import datasets, classifiers and performance metrics
-from sklearn import datasets, svm, metrics
+from sklearn import datasets, svm, cross_validation
 
 # The digits dataset
 digits = datasets.load_digits()
@@ -33,33 +33,17 @@ for index, (image, label) in enumerate(images_and_labels[:4]):
 # To apply a classifier on this data, we need to flatten the image, to
 # turn the data in a (samples, feature) matrix:
 n_samples = len(digits.images)
-# print "digits.images type: {}".format( type(digits.images) )
-# print "digits.images shape: {}".format( digits.images.shape )
 data = digits.images.reshape((n_samples, -1))
 
 # Create a classifier: a support vector classifier
 classifier = svm.LinearSVC()
 
+# Cross validate the data
+k_fold = 10
+scores = cross_validation.cross_val_score(
+    classifier, data, digits.target, cv=k_fold
+)
+print("SVM classifier accuracy (on 10-fold cross-validation): %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+
 # We learn the digits on the first half of the digits
-# print "MNIST data: {}".format( data[0].shape )
-# print "MNIST data: {}".format( type(data[0]) )
-# print "MNIST data: {}".format( data[0] )
-# classifier.fit(data[:n_samples / 2], digits.target[:n_samples / 2])
 classifier.fit(data, digits.target)
-
-# Now predict the value of the digit on the second half:
-expected = digits.target[n_samples / 2:]
-predicted = classifier.predict(data[n_samples / 2:])
-
-print("Classification report for classifier %s:\n%s\n"
-      % (classifier, metrics.classification_report(expected, predicted)))
-print("Confusion matrix:\n%s" % metrics.confusion_matrix(expected, predicted))
-
-# images_and_predictions = list(zip(digits.images[n_samples / 2:], predicted))
-# for index, (image, prediction) in enumerate(images_and_predictions[:4]):
-#     plt.subplot(2, 4, index + 5)
-#     plt.axis('off')
-#     plt.imshow(image, cmap=plt.cm.gray_r, interpolation='nearest')
-#     plt.title('Prediction: %i' % prediction)
-
-# plt.show()

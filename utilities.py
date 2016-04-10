@@ -9,7 +9,7 @@
 import cv2
 import numpy as np
 
-def aspectRatio(convexHull):
+def aspect_ratio(convexHull):
     """
     Aspect ratio is the ratio of width to height.
         width / height = aspect ratio
@@ -37,16 +37,16 @@ def solidity(convexHull):
     hullArea = cv2.contourArea(convexHull)
     return float(area) / hullArea
 
-def strokeWidthVariation(convexHull):
+def stroke_width_variation(convexHull):
     """
     Finds edges in a convex hull by converting
     convex hull into an approriate shape.
     """
     convexHull = convexHull.transpose(2,0,1).reshape(2,-1)
     convexHull = np.uint8(convexHull)
-    edge = cv2.Canny(convexHull, 100, 200)
-    return edge
+    edges = cv2.Canny(convexHull, 100, 200, L2gradient=True)
+    return edges
 
-def strokeWidthMetric(stroke):
+def SWV_metric(stroke):
     """ Calculates stroke width variation for a given stroke. """
     return np.std(stroke) / np.mean(stroke)

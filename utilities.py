@@ -1,15 +1,18 @@
 # ------------------------------------------------------------------------------
-# Author:   Tologon Eshimkanov (https://github.com/tologon)
-# Course:   COMP 3770-01 - Introduction to Artificial Intelligence
-# School:   Wentworth Institute of Technology
-# Project:  Simplified Digit Recognition
+# Author:       Tologon Eshimkanov (https://github.com/tologon)
+# Course:       COMP 3770-01 - Introduction to Artificial Intelligence
+# School:       Wentworth Institute of Technology
+# Project:      Simplified Digit Recognition
+# Description:
+#   This file contains useful utility functions, mostly applied
+#   to filter out convex hulls either by geometric or text-based properties.
 # ------------------------------------------------------------------------------
 
 # required package(s)
 import cv2
 import numpy as np
 
-def aspect_ratio(convexHull):
+def aspect_ratio(convex_hull):
     """
     Aspect ratio is the ratio of width to height.
         width / height = aspect ratio
@@ -17,34 +20,34 @@ def aspect_ratio(convexHull):
     Therefore, a convex hull is transformed into a bounding rectangle,
     from which its width and height are derived.
     """
-    x, y, w, h = cv2.boundingRect(convexHull)
+    x, y, w, h = cv2.boundingRect(convex_hull)
     return float(w) / h
 
-def extent(convexHull):
+def extent(convex_hull):
     """
     Extent is the ratio of contour area to bounding rectangle area.
     """
-    area = cv2.contourArea(convexHull)
-    x, y, w, h = cv2.boundingRect(convexHull)
-    rectArea = w * h
-    return float(area) / rectArea
+    area = cv2.contourArea(convex_hull)
+    x, y, w, h = cv2.boundingRect(convex_hull)
+    rect_area = w * h
+    return float(area) / rect_area
 
-def solidity(convexHull):
+def solidity(convex_hull):
     """
     Solidity is the ratio of contour area to its convex hull area.
     """
-    area = cv2.contourArea(convexHull)
-    hullArea = cv2.contourArea(convexHull)
-    return float(area) / hullArea
+    area = cv2.contourArea(convex_hull)
+    hull_area = cv2.contourArea(convex_hull)
+    return float(area) / hull_area
 
-def stroke_width_variation(convexHull):
+def stroke_width_variation(convex_hull):
     """
     Finds edges in a convex hull by converting
     convex hull into an approriate shape.
     """
-    convexHull = convexHull.transpose(2,0,1).reshape(2,-1)
-    convexHull = np.uint8(convexHull)
-    edges = cv2.Canny(convexHull, 100, 200, L2gradient=True)
+    convex_hull = convex_hull.transpose(2,0,1).reshape(2,-1)
+    convex_hull = np.uint8(convex_hull)
+    edges = cv2.Canny(convex_hull, 100, 200, L2gradient=True)
     return edges
 
 def SWV_metric(stroke):

@@ -7,7 +7,7 @@
 
 # required package(s)
 import argparse
-from pipeline import Pipeline, DEFAULT_SINGLE_DIGIT, DEFAULT_MULTIPLE_DIGIT
+from pipeline import *
 
 # TODO: add description
 def parse_options():
@@ -62,7 +62,17 @@ if __name__ == "__main__":
     pipeline.group_regions()
     output("after grouping", pipeline)
 
+    pipeline.cross_validate(k_fold = 10)
+
     result = pipeline.predict(pipeline.rectangles)
-    print "the predicted value(s) of digit(s): {}".format(result)
+
+    print "predicted value(s) of digit(s) for {}: {}".format(
+        pipeline.image_name, result)
+
     if args.digits:
         print "correctness of prediction(s): {}".format(result == args.digits)
+    elif args.example:
+        if args.example == 'single':
+            print "correctness of prediction(s): {}".format(result == [5])
+        elif args.example == 'multiple':
+            print "correctness of prediction(s): {}".format(result == [2, 6, 9])

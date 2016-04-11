@@ -9,9 +9,9 @@
 import cv2, math, classifier
 import numpy as np
 
-from utilities import *
+from utilities  import *
 from classifier import plt
-# ------------------------
+from sklearn    import cross_validation
 
 # constants
 DEFAULT_SINGLE_DIGIT = 'default_single_digit.png'
@@ -38,6 +38,7 @@ class Pipeline:
             cv2.IMREAD_GRAYSCALE  : Loads image in grayscale mode
             cv2.IMREAD_UNCHANGED  : Loads image as such including alpha channel
         """
+        self.image_name = image
         self.image = cv2.imread(image, cv2.IMREAD_GRAYSCALE)
         if self.image is None:
             raise Exception( "Cannot find the image -  {}.".format(image) )
@@ -149,7 +150,8 @@ class Pipeline:
             images.append( np.invert(image) )
         return np.array(images)
 
-    def plot_results(self, digits, predictions):
+    # TODO: add description
+    def plot_result_data(self, digits, predictions):
         digits_and_predictions = list(zip(digits, predictions))
         for index, (image, label) in enumerate(digits_and_predictions):
             plt.subplot(2, 4, index + 5)
@@ -166,9 +168,19 @@ class Pipeline:
 
         predicted = clf.predict(data)
 
-        if len(digits) > 4:
-            digits = digits[:4]
-
-        self.plot_results(digits, predicted)
+        self.plot_result_data(digits[:4], predicted)
 
         return predicted
+
+    def cross_validate(self, k_fold = 2):
+        print "\nCross validating the MNIST database..."
+        # Cross validate the data
+        scores = cross_validation.cross_val_score(
+            classifier.classifier,
+            classifier.data,
+            classifier.digits.target,
+            cv=k_fold
+        )
+        result = "SVM classifier accuracy (on %d-fold cross-validation):\
+        %0.2f (+/- %0.2f)\n" % (k_fold, scores.mean(), scores.std() * 2)
+        print result

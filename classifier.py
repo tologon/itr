@@ -1,18 +1,15 @@
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
-# License: BSD 3 clause
-
 # ------------------------------------------------------------------------------
+# Original Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
+# License: BSD 3 clause
 # Author:   Tologon Eshimkanov (https://github.com/tologon)
 # Course:   COMP 3770-01 - Introduction to Artificial Intelligence
 # School:   Wentworth Institute of Technology
 # Project:  Simplified Digit Recognition
 # ------------------------------------------------------------------------------
 
-# Standard scientific Python imports
+# Import datasets and classifiers and performance metrics
 import matplotlib.pyplot as plt
-
-# Import datasets, classifiers and performance metrics
-from sklearn import datasets, svm, cross_validation
+from sklearn import datasets, svm
 
 # The digits dataset
 digits = datasets.load_digits()
@@ -37,15 +34,6 @@ data = digits.images.reshape((n_samples, -1))
 
 # Create a classifier: a support vector classifier
 classifier = svm.LinearSVC()
-
-# Cross validate the data
-k_fold = 10
-scores = cross_validation.cross_val_score(
-    classifier, data, digits.target, cv=k_fold
-)
-
-print("SVM classifier accuracy (on 10-fold cross-validation): \
-      %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
 # We learn the digits on the first half of the digits
 classifier.fit(data, digits.target)

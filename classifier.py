@@ -1,13 +1,20 @@
 # ------------------------------------------------------------------------------
-# Original Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
-# License: BSD 3 clause
-# Author:   Tologon Eshimkanov (https://github.com/tologon)
-# Course:   COMP 3770-01 - Introduction to Artificial Intelligence
-# School:   Wentworth Institute of Technology
-# Project:  Simplified Digit Recognition
+# Original Author:  Gael Varoquaux <gael dot varoquaux at normalesup dot org>
+# License:          BSD 3 clause
+# Author:           Tologon Eshimkanov (https://github.com/tologon)
+# Course:           COMP 3770-01 - Introduction to Artificial Intelligence
+# School:           Wentworth Institute of Technology
+# Project:          Simplified Digit Recognition
+# Description:
+#   This file is storing a machine learning algorithm (i.e a classifier
+#   to be applied on training and test data), plotting function, and
+#   MNIST database of digits. This file primarily displays training examples,
+#   processes MNIST data and trains ML classifier on such data.
+#
+#   Note: the cross-validation process happens in the pipeline.py file.
 # ------------------------------------------------------------------------------
 
-# Import datasets and classifiers and performance metrics
+# required package(s)
 import matplotlib.pyplot as plt
 from sklearn import datasets, svm
 
@@ -32,8 +39,8 @@ for index, (image, label) in enumerate(images_and_labels[:4]):
 n_samples = len(digits.images)
 data = digits.images.reshape((n_samples, -1))
 
-# Create a classifier: a support vector classifier
+# Create a classifier: a linear support vector classifier
 classifier = svm.LinearSVC()
 
-# We learn the digits on the first half of the digits
+# We learn the digits on the entire database of the MNIST digits
 classifier.fit(data, digits.target)

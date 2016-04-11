@@ -72,7 +72,7 @@ args = parse_options()
 if __name__ == "__main__":
     """
     Executes the entire pipeline for simplified digit(s) recognition.
-    Such pipeline includes the following:
+    The pipeline (described in pipeline.py) includes the following:
         - pipeline initialization
         - MSER regions detection
         - regions filtering by properties (geometric & text-based)

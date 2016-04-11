@@ -1,8 +1,13 @@
 # ------------------------------------------------------------------------------
-# Author:   Tologon Eshimkanov (https://github.com/tologon)
-# Course:   COMP 3770-01 - Introduction to Artificial Intelligence
-# School:   Wentworth Institute of Technology
-# Project:  Simplified Digit Recognition
+# Author:       Tologon Eshimkanov (https://github.com/tologon)
+# Course:       COMP 3770-01 - Introduction to Artificial Intelligence
+# School:       Wentworth Institute of Technology
+# Project:      Simplified Digit Recognition
+# Description:
+#   This file contains the Pipeline class, that is responsible
+#   for the wide range of operations on image, such as image pre-processing,
+#   MSER regions detection, filtering, cross-validation, output display,
+#   digit(s) recognition and cross-validation.
 # ------------------------------------------------------------------------------
 
 # required package(s)
@@ -14,15 +19,15 @@ from classifier import plt
 from sklearn    import cross_validation
 
 # constants
-DEFAULT_SINGLE_DIGIT = 'default_single_digit.png'
-DEFAULT_MULTIPLE_DIGIT = 'default_multiple_digits.png'
-DEFAULT_COLOR = (0, 255, 0) # RGB values; doesn't matter on grayscale
-ASPECT_RATIO_THRESHOLD = 1
-LOW_EXTENT_THRESHOLD = 0.3
-HIGH_EXTENT_THRESHOLD = 0.59
-SOLIDITY_THRESHOLD = 1.1
-STROKE_WIDTH_THRESHOLD = 0.99
-GROUP_THRESHOLD = 1 # minimum possible number of rectangles - 1
+DEFAULT_SINGLE_DIGIT    = 'default_single_digit.png'
+DEFAULT_MULTIPLE_DIGIT  = 'default_multiple_digits.png'
+DEFAULT_COLOR           = (0, 255, 0) # RGB values; doesn't matter on grayscale
+ASPECT_RATIO_THRESHOLD  = 1
+LOW_EXTENT_THRESHOLD    = 0.3
+HIGH_EXTENT_THRESHOLD   = 0.59
+SOLIDITY_THRESHOLD      = 1.1
+STROKE_WIDTH_THRESHOLD  = 0.99
+GROUP_THRESHOLD         = 1 # minimum possible number of rectangles - 1
 
 class Pipeline:
     """
@@ -137,8 +142,11 @@ class Pipeline:
         if len(futureRectangles) != 0:
             self.rectangles = futureRectangles
 
-    # TODO: add description
     def resize_digits(self, digits, width = 8, height = 8):
+        """
+        Resizes each of given digits into default width x height image
+        (for optional future use by machine learning algorithm).
+        """
         images = []
         for i, d in enumerate(digits):
             x, y, w, h = d
@@ -150,8 +158,11 @@ class Pipeline:
             images.append( np.invert(image) )
         return np.array(images)
 
-    # TODO: add description
     def plot_result_data(self, digits, predictions):
+        """
+        Plots result data in form of digits' images and
+        predicted values (alongside the plotted training data).
+        """
         digits_and_predictions = list(zip(digits, predictions))
         for index, (image, label) in enumerate(digits_and_predictions):
             plt.subplot(2, 4, index + 5)
@@ -160,8 +171,11 @@ class Pipeline:
             plt.title('Prediction: %i' % label)
         plt.show()
 
-    # TODO: add description
     def predict(self, digits, clf = classifier.classifier):
+        """
+        Given a classifier (default - Linear SVM),
+        predict and return values of provided digits.
+        """
         digits = self.resize_digits(digits)
         n_samples = len(digits)
         data = digits.ravel().reshape( (n_samples, -1) )
@@ -173,6 +187,10 @@ class Pipeline:
         return predicted
 
     def cross_validate(self, k_fold = 2):
+        """
+        Performs k-fold cross-validation of the MNIST data
+        and prints the results (i.e. accuracy of k-fold cross-validation).
+        """
         print "\nCross validating the MNIST database..."
         # Cross validate the data
         scores = cross_validation.cross_val_score(
